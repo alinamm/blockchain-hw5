@@ -5,18 +5,20 @@ npx hardhat test
 ```
 Logs:
 ```shell
-Compiled 2 Solidity files successfully
-
-
   Voting
-    ✔ Creating proposal (2390ms)
-    ✔ Proposal is discarded (298ms)
-    ✔ Proposal is accepted, one user (219ms)
-    ✔ Proposal is accepted, two users (246ms)
-    ✔ Proposal is rejected, two users (220ms)
-    ✔ One proposal is accepted, another one is rejected (269ms)
+    ✔ Creating proposal (2902ms)
+    ✔ Proposal is discarded (370ms)
+    ✔ Do not have enough coins (310ms)
+    ✔ Already voted (263ms)
+    ✔ Proposal is accepted, one user (251ms)
+    ✔ Proposal is rejected, one user (260ms)
+    ✔ Proposal is accepted, two users (214ms)
+    ✔ Proposal is rejected, two users (325ms)
+    ✔ One proposal is accepted, another one is rejected (385ms)
+    ✔ One proposal is accepted, another one is rejected, three users (417ms)
 
 
-  6 passing (4s)
+  10 passing (6s)
+
 
 ```

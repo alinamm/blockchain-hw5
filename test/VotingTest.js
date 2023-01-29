@@ -34,6 +34,27 @@ describe("Voting", function () {
     expect(await voting.ifProposalIsActive(id4)).to.true;
   });
 
+  it("Do not have enough coins", async function () {
+    const [, user,] = await ethers.getSigners();
+    const Coin = await (await ethers.getContractFactory("VotingCoin")).deploy();
+    const voting = await (await ethers.getContractFactory("Voting")).deploy(Coin.address);
+    Coin.transfer(user.address, 40);
+    const id = ethers.BigNumber.from(1);
+    await voting.connect(user).getNewProposal(id);
+    await expect(voting.connect(user).vote(id, true, 55)).to.be.revertedWith("This voter doesn't have enough tokens");
+  });
+
+  it("Already voted", async function () {
+    const [, user,] = await ethers.getSigners();
+    const Coin = await (await ethers.getContractFactory("VotingCoin")).deploy();
+    const voting = await (await ethers.getContractFactory("Voting")).deploy(Coin.address);
+    Coin.transfer(user.address, 24);
+    const id = ethers.BigNumber.from(1);
+    await voting.connect(user).getNewProposal(id);
+    await voting.connect(user).vote(id, false, 24);
+    await expect(voting.connect(user).vote(id, true, 24)).to.be.revertedWith("Already voted for proposal");
+  });
+
   it("Proposal is accepted, one user", async function () {
     const [, user,] = await ethers.getSigners();
     const Coin = await (await ethers.getContractFactory("VotingCoin")).deploy();
@@ -42,6 +63,17 @@ describe("Voting", function () {
     const id = ethers.BigNumber.from(1);
     await voting.connect(user).getNewProposal(id);
     expect(await voting.connect(user).vote(id, true, 55)).to.emit(voting, "Accepted").withArgs(id);
+    expect(await voting.ifProposalIsActive(id)).to.false;
+  });
+
+  it("Proposal is rejected, one user", async function () {
+    const [, user,] = await ethers.getSigners();
+    const Coin = await (await ethers.getContractFactory("VotingCoin")).deploy();
+    const voting = await (await ethers.getContractFactory("Voting")).deploy(Coin.address);
+    Coin.transfer(user.address, 57);
+    const id = ethers.BigNumber.from(1);
+    await voting.connect(user).getNewProposal(id);
+    expect(await voting.connect(user).vote(id, false, 57)).to.emit(voting, "Rejected").withArgs(id);
     expect(await voting.ifProposalIsActive(id)).to.false;
   });
 
@@ -87,5 +119,24 @@ describe("Voting", function () {
     await voting.connect(secondUser).vote(id2, false, 44);
     expect(await voting.connect(firstUser).vote(id2, false, 30)).to.emit(voting, "Rejected").withArgs(id2);
     expect(await voting.connect(firstUser).vote(id1, true, 30)).to.emit(voting, "Accepted").withArgs(id1);
+  });
+
+  it("One proposal is accepted, another one is rejected, three users", async function () {
+    const [, firstUser, secondUser, thirdUser ] = await ethers.getSigners();
+    const Coin = await (await ethers.getContractFactory("VotingCoin")).deploy();
+    const voting = await (await ethers.getContractFactory("Voting")).deploy(Coin.address);
+    Coin.transfer(firstUser.address, 30);
+    Coin.transfer(secondUser.address, 19);
+    Coin.transfer(thirdUser.address, 51);
+    const id1 = ethers.BigNumber.from(1);
+    const id2 = ethers.BigNumber.from(2);
+    await voting.connect(secondUser).getNewProposal(id1);
+    await voting.connect(secondUser).getNewProposal(id2);
+    await voting.connect(secondUser).vote(id1, false, 19);
+    await voting.connect(secondUser).vote(id2, true, 19);
+    await voting.connect(firstUser).vote(id1, false, 30);
+    await voting.connect(firstUser).vote(id2, true, 30);
+    expect(await voting.connect(thirdUser).vote(id2, false, 51)).to.emit(voting, "Rejected").withArgs(id2);
+    expect(await voting.connect(thirdUser).vote(id1, true, 51)).to.emit(voting, "Accepted").withArgs(id1);
   });
 });

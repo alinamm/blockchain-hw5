@@ -8,6 +8,7 @@ contract Voting {
     event Accepted(uint256 id);
     event Rejected(uint256 id);
     event Discarded(uint256 id);
+    event Created(uint256 id, uint256 deadline);
 
     uint constant PROPOSALS_LIMIT = 3;
     uint constant TTL_OF_PROPOSAL = 3 * 24 * 60 * 60; // time-to-live(TTL) of proposal is 3 days
@@ -50,7 +51,6 @@ contract Voting {
             for (uint i = 0; i < PROPOSALS_LIMIT; i++) {
                 // checking if deadline approached
                 if (proposals[i].deadline < deadline) {
-                    deadline = proposals[i].deadline;
                     index = i;
                     found = true;
                 }
@@ -80,6 +80,7 @@ contract Voting {
         delete proposal.votesFor;
         delete proposal.votesAgainst;
         proposal.deadline = block.timestamp + TTL_OF_PROPOSAL;
+        emit Created(proposal.id, proposal.deadline);
     }
 
     function vote(uint256 id, bool isVoteFor, uint256 value) public {
